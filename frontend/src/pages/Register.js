@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Paper,
@@ -30,6 +31,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { t } = useTranslation();
   const theme = useTheme();
   
   const [formData, setFormData] = useState({
@@ -121,7 +123,7 @@ const Register = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b21b6 100%)`,
+        background: `linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -196,7 +198,7 @@ const Register = () => {
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 3,
-                boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+                boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
               }}
             >
               <PersonAdd sx={{ fontSize: 40, color: 'white' }} />

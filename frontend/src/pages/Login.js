@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Paper,
@@ -26,6 +27,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
   const theme = useTheme();
   
   const [formData, setFormData] = useState({
@@ -69,7 +71,7 @@ const Login = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b21b6 100%)`,
+        background: `linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -119,7 +121,7 @@ const Login = () => {
             },
           }}
         >
-          Back to Home
+          {t('login.back_home')}
         </Button>
 
         <Paper 
@@ -138,13 +140,13 @@ const Login = () => {
                 width: 80,
                 height: 80,
                 borderRadius: 3,
-                background: `linear-gradient(135deg, #667eea, #764ba2)`,
+                background: `linear-gradient(135deg, #60a5fa, #3b82f6)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 3,
-                boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+                boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
               }}
             >
               <Lock sx={{ fontSize: 40, color: 'white' }} />
@@ -161,11 +163,11 @@ const Login = () => {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Welcome Back
+              {t('login.title')}
             </Typography>
             
             <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-              Sign in to access your dashboard
+              {t('login.subtitle')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Dropout Prediction System - Zilla Parishad Schools
@@ -187,7 +189,7 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email Address"
+              label={t('login.email')}
               name="email"
               type="email"
               value={formData.email}
@@ -206,7 +208,7 @@ const Login = () => {
 
             <TextField
               fullWidth
-              label="Password"
+              label={t('login.password')}
               name="password"
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
@@ -251,7 +253,7 @@ const Login = () => {
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t('login.login_button')}
             </Button>
 
             <Box sx={{ mt: 3, textAlign: 'center' }}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AppBar,
   Toolbar,
@@ -30,6 +31,7 @@ import {
   Person
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import LanguageSelector from './LanguageSelector';
 
 function HideOnScroll(props) {
   const { children } = props;
@@ -46,6 +48,7 @@ const Navbar = (props) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleMenu = (event) => {
@@ -63,12 +66,12 @@ const Navbar = (props) => {
   };
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { path: '/students', label: 'Students', icon: <PeopleIcon /> },
-    { path: '/upload', label: 'Upload', icon: <UploadIcon /> },
-    { path: '/class-view', label: 'Class View', icon: <EditIcon /> },
-    { path: '/predict', label: 'Predict', icon: <PredictIcon /> },
-    { path: '/analytics', label: 'Analytics', icon: <AssessmentIcon /> },
+    { path: '/dashboard', label: t('nav.dashboard'), icon: <DashboardIcon /> },
+    { path: '/students', label: t('nav.students'), icon: <PeopleIcon /> },
+    { path: '/upload', label: t('nav.upload'), icon: <UploadIcon /> },
+    { path: '/class-view', label: t('nav.class_view'), icon: <EditIcon /> },
+    { path: '/predict', label: t('nav.predict'), icon: <PredictIcon /> },
+    { path: '/analytics', label: t('nav.analytics'), icon: <AssessmentIcon /> },
   ];
 
   const getInitials = (name) => {
@@ -88,7 +91,7 @@ const Navbar = (props) => {
         elevation={0}
         sx={{ 
           mb: 4,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b21b6 100%)',
+          background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%)',
           backdropFilter: 'blur(10px)',
           borderBottom: '1px solid',
           borderColor: alpha('#ffffff', 0.1),
@@ -117,16 +120,17 @@ const Navbar = (props) => {
                   width: 40,
                   height: 40,
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
                   backdropFilter: 'blur(10px)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   mr: 1.5,
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  border: '2px solid rgba(255,255,255,0.5)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                 }}
               >
-                <PredictIcon sx={{ color: 'white', fontSize: 24 }} />
+                <PredictIcon sx={{ color: '#1e40af', fontSize: 24 }} />
               </Box>
               <Typography
                 variant="h6"
@@ -139,7 +143,7 @@ const Navbar = (props) => {
                   fontSize: '1.25rem',
                 }}
               >
-                Dropout Predictor
+                {t('app_name')}
               </Typography>
             </Box>
 
@@ -197,9 +201,11 @@ const Navbar = (props) => {
 
             {/* User Menu */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2 }}>
+              <LanguageSelector />
+              
               <Chip
                 icon={<Person sx={{ color: 'white !important' }} />}
-                label={user?.full_name || user?.email || 'Teacher'}
+                label={user?.full_name || user?.email || t('common.teacher') || 'Teacher'}
                 sx={{
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%)',
                   backdropFilter: 'blur(10px)',
@@ -299,12 +305,12 @@ const Navbar = (props) => {
                     mx: 1,
                     my: 0.5,
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #7C3AED15 0%, #764ba215 100%)',
+                      background: 'linear-gradient(135deg, #3b82f615 0%, #60a5fa15 100%)',
                     }
                   }}
                 >
                   <Settings sx={{ mr: 1.5, color: '#7C3AED', fontSize: 20 }} />
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Settings</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{t('nav.settings')}</Typography>
                 </MenuItem>
                 
                 <Divider sx={{ my: 0.5 }} />
@@ -324,7 +330,7 @@ const Navbar = (props) => {
                   }}
                 >
                   <Logout sx={{ mr: 1.5, fontSize: 20 }} />
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Logout</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{t('nav.logout')}</Typography>
                 </MenuItem>
               </Menu>
             </Box>

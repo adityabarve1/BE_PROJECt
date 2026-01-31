@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -22,46 +23,47 @@ import {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const theme = useTheme();
 
   const features = [
     {
       icon: <PsychologyIcon sx={{ fontSize: 50 }} />,
-      title: 'AI-Powered Predictions',
-      description: 'Advanced TabNet deep learning model with 97.5% accuracy for early dropout detection',
+      title: t('landing.feature1_title'),
+      description: t('landing.feature1_desc'),
     },
     {
       icon: <TrendingUpIcon sx={{ fontSize: 50 }} />,
-      title: 'Real-Time Analytics',
-      description: 'Comprehensive dashboards with actionable insights and trend analysis',
+      title: t('landing.feature2_title'),
+      description: t('landing.feature2_desc'),
     },
     {
       icon: <SpeedIcon sx={{ fontSize: 50 }} />,
-      title: 'Instant Results',
-      description: 'Get predictions in milliseconds with batch processing support',
+      title: t('landing.feature3_title'),
+      description: t('landing.feature3_desc'),
     },
     {
       icon: <SecurityIcon sx={{ fontSize: 50 }} />,
-      title: 'Secure & Private',
-      description: 'Enterprise-grade security with encrypted data storage',
+      title: t('landing.feature4_title'),
+      description: t('landing.feature4_desc'),
     },
     {
       icon: <GroupIcon sx={{ fontSize: 50 }} />,
-      title: 'Student Management',
-      description: 'Complete student lifecycle tracking with intervention planning',
+      title: t('landing.feature5_title'),
+      description: t('landing.feature5_desc'),
     },
     {
       icon: <SchoolIcon sx={{ fontSize: 50 }} />,
-      title: 'Class Monitoring',
-      description: 'Track entire classes with customizable filters and reports',
+      title: t('landing.feature6_title'),
+      description: t('landing.feature6_desc'),
     },
   ];
 
   const stats = [
-    { value: '97.5%', label: 'Prediction Accuracy' },
-    { value: '10ms', label: 'Response Time' },
-    { value: '1000+', label: 'Students Analyzed' },
-    { value: '24/7', label: 'Availability' },
+    { value: '97.5%', label: t('landing.stats_accuracy') },
+    { value: '10ms', label: t('landing.stats_response') },
+    { value: '1000+', label: t('landing.stats_students') },
+    { value: '24/7', label: t('landing.stats_availability') },
   ];
 
   return (
@@ -119,14 +121,7 @@ const LandingPage = () => {
                   lineHeight: 1.2,
                 }}
               >
-                Empowering Education Through{' '}
-                <Box component="span" sx={{ 
-                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}>
-                  AI Intelligence
-                </Box>
+                {t('landing.hero_title')}
               </Typography>
               
               <Typography
@@ -138,7 +133,7 @@ const LandingPage = () => {
                   lineHeight: 1.6,
                 }}
               >
-                Advanced dropout prediction system for Zilla Parishad schools. Identify at-risk students early and take proactive interventions.
+                {t('landing.hero_subtitle')}
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -148,23 +143,23 @@ const LandingPage = () => {
                   onClick={() => navigate('/register')}
                   sx={{
                     bgcolor: 'white',
-                    color: theme.palette.primary.main,
+                    color: '#1e40af',
                     px: 4,
                     py: 1.5,
                     fontSize: '1.1rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     borderRadius: 3,
                     textTransform: 'none',
                     boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.common.white, 0.9),
+                      bgcolor: alpha(theme.palette.common.white, 0.95),
                       transform: 'translateY(-2px)',
                       boxShadow: '0 12px 35px rgba(0,0,0,0.3)',
                     },
                     transition: 'all 0.3s ease',
                   }}
                 >
-                  Get Started Free
+                  {t('landing.get_started')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -172,24 +167,24 @@ const LandingPage = () => {
                   onClick={() => navigate('/login')}
                   sx={{
                     color: 'white',
-                    borderColor: alpha(theme.palette.common.white, 0.5),
+                    borderColor: 'white',
                     px: 4,
                     py: 1.5,
                     fontSize: '1.1rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     borderRadius: 3,
                     textTransform: 'none',
                     borderWidth: 2,
                     '&:hover': {
                       borderColor: 'white',
-                      bgcolor: alpha(theme.palette.common.white, 0.1),
+                      bgcolor: alpha(theme.palette.common.white, 0.2),
                       borderWidth: 2,
                       transform: 'translateY(-2px)',
                     },
                     transition: 'all 0.3s ease',
                   }}
                 >
-                  Sign In
+                  {t('landing.sign_in')}
                 </Button>
               </Box>
             </Grid>
@@ -332,7 +327,7 @@ const LandingPage = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         mb: 3,
-                        background: `linear-gradient(135deg, #667eea, #764ba2)`,
+                        background: `linear-gradient(135deg, #60a5fa, #3b82f6)`,
                         color: 'white',
                       }}
                     >
@@ -369,7 +364,7 @@ const LandingPage = () => {
       <Box
         sx={{
           py: 12,
-          background: `linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%)`,
+          background: `linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)`,
         }}
       >
         <Container maxWidth="md">

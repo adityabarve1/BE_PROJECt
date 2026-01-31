@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Grid,
@@ -32,6 +33,7 @@ import { toast } from 'react-toastify';
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const { t } = useTranslation();
   const theme = useTheme();
 
   useEffect(() => {
@@ -56,7 +58,7 @@ const Dashboard = () => {
         <Box sx={{ textAlign: 'center' }}>
           <CircularProgress size={60} thickness={4} />
           <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
-            Loading Dashboard...
+            {t('dashboard.loading')}
           </Typography>
         </Box>
       </Container>
@@ -77,10 +79,10 @@ const Dashboard = () => {
               mb: 1,
             }}
           >
-            Dashboard Overview
+            {t('dashboard.title')}
           </Typography>
           <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
-            Monitor student performance and dropout risk analytics
+            {t('dashboard.subtitle')}
           </Typography>
         </Box>
 

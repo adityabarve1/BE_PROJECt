@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/glassmorphism.css';
+import './i18n/config';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -30,9 +31,9 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#7C3AED', // Purple
-      light: '#A78BFA',
-      dark: '#5B21B6',
+      main: '#3b82f6', // Light Blue
+      light: '#60a5fa',
+      dark: '#2563eb',
       contrastText: '#FFFFFF',
     },
     secondary: {
@@ -57,7 +58,7 @@ const theme = createTheme({
       dark: '#DC2626',
     },
     background: {
-      default: '#667eea',
+      default: '#60a5fa',
       paper: 'rgba(255, 255, 255, 0.7)',
     },
     text: {
@@ -136,9 +137,9 @@ const theme = createTheme({
           },
         },
         contained: {
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
           '&:hover': {
-            background: 'linear-gradient(135deg, #5568d3 0%, #6D28D9 100%)',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
           },
         },
       },
@@ -179,7 +180,7 @@ function App() {
             className="App"
             sx={{
               minHeight: '100vh',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b21b6 100%)',
+              background: 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%)',
               backgroundAttachment: 'fixed',
             }}
           >

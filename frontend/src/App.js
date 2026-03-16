@@ -214,7 +214,7 @@ function App() {
                 }
               />
               <Route
-                path="/students/:rollNo"
+                path="/students/:studentId"
                 element={
                   <ProtectedRoute>
                     <>

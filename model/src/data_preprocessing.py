@@ -110,6 +110,19 @@ class DropoutDataPreprocessor:
         self.scaler = data['scaler']
         self.feature_names = data['feature_names']
         print(f"Preprocessor loaded from {filepath}")
+
+    def _safe_label_transform(self, encoder, value):
+        """Transform a categorical value, falling back for unseen labels."""
+        text = str(value)
+        classes = list(encoder.classes_)
+
+        if text in classes:
+            return encoder.transform([text])[0]
+
+        if 'Other' in classes:
+            return encoder.transform(['Other'])[0]
+
+        return 0
     
     def preprocess_single_sample(self, sample_dict):
         """Preprocess a single student record for prediction"""
@@ -119,7 +132,11 @@ class DropoutDataPreprocessor:
         # Encode categorical variables
         for col, encoder in self.label_encoders.items():
             if col in df.columns:
-                df[col] = encoder.transform(df[col].astype(str))
+                df[col] = df[col].apply(lambda value: self._safe_label_transform(encoder, value))
+
+        for feature in self.feature_names:
+            if feature not in df.columns:
+                df[feature] = 0
         
         # Select only feature columns in the correct order
         X = df[self.feature_names]

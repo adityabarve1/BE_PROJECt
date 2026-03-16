@@ -21,16 +21,27 @@ import {
   Chip,
 } from '@mui/material';
 import axios from 'axios';
-import { predictDropout, predictBatch } from '../services/api';
+import { predictDropout, predictBatch, explainPrediction } from '../services/api';
 import { toast } from 'react-toastify';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell,
+  ResponsiveContainer,
+} from 'recharts';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 const PredictionForm = () => {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [batchResults, setBatchResults] = useState(null);
+  const [explanation, setExplanation] = useState(null);
   
   // Student-wise prediction state
   const [selectedClass, setSelectedClass] = useState('');
@@ -81,11 +92,12 @@ const PredictionForm = () => {
 
     setLoading(true);
     setResult(null);
+    setExplanation(null);
 
     try {
       const student = students.find(s => s.student_id === selectedStudent);
       
-      const response = await predictDropout({
+      const predictionPayload = {
         attendance: parseFloat(student.attendance) || 0,
         marks: parseFloat(student.marks) || 0,
         gender: student.gender,
@@ -93,15 +105,23 @@ const PredictionForm = () => {
         income: student.income || 'Medium',
         location: student.location || 'Urban',
         parent_occupation: student.parent_occupation || 'Small Business',
-      });
+      };
 
-      const predictionData = response.data.data || response.data;
+      const [predResponse, explainResponse] = await Promise.all([
+        predictDropout(predictionPayload),
+        explainPrediction(predictionPayload),
+      ]);
+
+      const predictionData = predResponse.data.data || predResponse.data;
 
       setResult({
         ...predictionData,
         student_name: student.student_name,
         roll_no: student.roll_no,
       });
+
+      const explainData = explainResponse.data.data || explainResponse.data;
+      setExplanation(explainData);
 
       // Update student profile with prediction
       await axios.put(`${API_URL}/students/${student.student_id}`, {
@@ -291,6 +311,69 @@ const PredictionForm = () => {
                   </Typography>
                   <Typography>{result.recommendation}</Typography>
                 </Paper>
+
+                {/* ---- Model Votes ---- */}
+                {result.model_votes && (
+                  <Paper sx={{ p: 2, mt: 2 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                      Ensemble Model Votes
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {Object.entries(result.model_votes).map(([model, vote]) => (
+                        <Box key={model} sx={{ textAlign: 'center' }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            {model === 'decision_tree' ? 'Decision Tree'
+                              : model === 'logistic_regression' ? 'Logistic Regression'
+                              : 'TabNet'}
+                          </Typography>
+                          <Chip
+                            label={`${vote.prediction} (${(vote.confidence * 100).toFixed(1)}%)`}
+                            color={vote.prediction === 'High' ? 'error' : 'success'}
+                            size="small"
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      Final decision by majority voting (2-of-3 models)
+                    </Typography>
+                  </Paper>
+                )}
+
+                {/* ---- SHAP Feature Importance Chart ---- */}
+                {explanation && explanation.top_factors && (
+                  <Paper sx={{ p: 2, mt: 2 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
+                      Why this prediction? — Feature Impact
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                      {explanation.explanation_type} · Positive = increases dropout risk · Negative = decreases risk
+                    </Typography>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart
+                        data={explanation.top_factors.map(f => ({
+                          feature: f.feature.replace('_', ' '),
+                          value: f.importance,
+                        }))}
+                        layout="vertical"
+                        margin={{ top: 4, right: 30, left: 110, bottom: 4 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" tickFormatter={v => v.toFixed(3)} />
+                        <YAxis type="category" dataKey="feature" tick={{ fontSize: 12 }} />
+                        <Tooltip formatter={(v) => v.toFixed(4)} />
+                        <Bar dataKey="value" name="SHAP value">
+                          {explanation.top_factors.map((f, idx) => (
+                            <Cell
+                              key={`cell-${idx}`}
+                              fill={f.importance > 0 ? '#ef5350' : '#66bb6a'}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Paper>
+                )}
               </Box>
             )}
           </Box>

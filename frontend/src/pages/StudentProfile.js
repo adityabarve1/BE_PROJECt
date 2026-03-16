@@ -10,26 +10,26 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
-import { getStudentByRollNo, getPredictionHistory } from '../services/api';
+import { getStudentById, getPredictionHistory } from '../services/api';
 import { toast } from 'react-toastify';
 
 const StudentProfile = () => {
-  const { rollNo } = useParams();
+  const { studentId } = useParams();
   const [student, setStudent] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStudentData();
-  }, [rollNo]);
+  }, [studentId]);
 
   const fetchStudentData = async () => {
     try {
-      const studentResponse = await getStudentByRollNo(rollNo);
-      setStudent(studentResponse.data);
+      const studentResponse = await getStudentById(studentId);
+      setStudent(studentResponse.data.data);
 
-      const historyResponse = await getPredictionHistory(rollNo);
-      setHistory(historyResponse.data);
+      const historyResponse = await getPredictionHistory(studentId);
+      setHistory(historyResponse.data.data || []);
 
       setLoading(false);
     } catch (error) {

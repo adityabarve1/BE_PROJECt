@@ -249,11 +249,10 @@ class PredictionHistoryModel:
         client = SupabaseClient.get_instance()
         
         data = {
-            'roll_no': prediction_data['roll_no'],
+            'student_id': prediction_data['student_id'],
             'dropout_risk': prediction_data['dropout_risk'],
             'risk_score': prediction_data['risk_score'],
             'confidence': prediction_data['confidence'],
-            'recommendation': prediction_data['recommendation'],
             'created_at': datetime.utcnow().isoformat()
         }
         
@@ -261,8 +260,8 @@ class PredictionHistoryModel:
         return response.data
     
     @staticmethod
-    def get_student_prediction_history(roll_no):
+    def get_student_prediction_history(student_id):
         """Get prediction history for a student"""
         client = SupabaseClient.get_instance()
-        response = client.table(PredictionHistoryModel.TABLE_NAME).select("*").eq('roll_no', roll_no).order('created_at', desc=True).execute()
+        response = client.table(PredictionHistoryModel.TABLE_NAME).select("*").eq('student_id', student_id).order('created_at', desc=True).execute()
         return response.data

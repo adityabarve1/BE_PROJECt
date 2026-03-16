@@ -41,6 +41,9 @@ const ClassView = () => {
 
   useEffect(() => {
     fetchStudents();
+
+    const timer = setInterval(fetchStudents, 15000);
+    return () => clearInterval(timer);
   }, [classValue, admissionYear]);
 
   const fetchStudents = async () => {
@@ -48,7 +51,7 @@ const ClassView = () => {
     setError('');
     
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
       const response = await axios.get(
         `${API_URL}/students/class/${classValue}?admission_year=${admissionYear}`
       );
@@ -86,7 +89,7 @@ const ClassView = () => {
     setSaving(true);
     
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
       await axios.put(
         `${API_URL}/students/${selectedStudent.student_id}`,
         editFormData

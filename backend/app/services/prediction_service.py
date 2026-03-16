@@ -18,6 +18,11 @@ class PredictionService:
     
     def __init__(self):
         """Initialize the prediction service with the trained model"""
+        self.predictor = None
+        self._initialize_predictor()
+
+    def _initialize_predictor(self):
+        """Initialize predictor; safe to call multiple times."""
         try:
             self.predictor = DropoutPredictor(
                 model_path=Config.MODEL_PATH,
@@ -39,6 +44,8 @@ class PredictionService:
             Dictionary with prediction results
         """
         if not self.predictor:
+            self._initialize_predictor()
+        if not self.predictor:
             raise Exception("Prediction model not initialized")
         
         return self.predictor.predict_single(student_data)
@@ -54,6 +61,8 @@ class PredictionService:
             List of prediction results
         """
         if not self.predictor:
+            self._initialize_predictor()
+        if not self.predictor:
             raise Exception("Prediction model not initialized")
         
         return self.predictor.predict_batch(student_data_list)
@@ -68,6 +77,8 @@ class PredictionService:
         Returns:
             Dictionary with feature importance
         """
+        if not self.predictor:
+            self._initialize_predictor()
         if not self.predictor:
             raise Exception("Prediction model not initialized")
         

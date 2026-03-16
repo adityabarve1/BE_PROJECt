@@ -93,6 +93,15 @@ def predict_batch():
         
         # Make batch predictions
         results = prediction_service.predict_batch(data['students'])
+
+        # Persist prediction history when student_id is available per row
+        for i, student_data in enumerate(data['students']):
+            if i < len(results) and 'student_id' in student_data:
+                history_data = {
+                    'student_id': student_data['student_id'],
+                    **results[i]
+                }
+                PredictionHistoryModel.create_prediction_record(history_data)
         
         return jsonify({
             'success': True,

@@ -26,6 +26,9 @@ const StudentList = () => {
 
   useEffect(() => {
     fetchStudents();
+
+    const timer = setInterval(fetchStudents, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   const fetchStudents = async () => {
@@ -95,7 +98,7 @@ const StudentList = () => {
                 <TableCell>
                   <IconButton
                     color="primary"
-                    onClick={() => navigate(`/students/${student.roll_no}`)}
+                    onClick={() => navigate(`/students/${student.student_id}`)}
                   >
                     <ViewIcon />
                   </IconButton>

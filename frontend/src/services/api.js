@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,20 +15,23 @@ export const getAllStudents = (limit = 100, offset = 0) => {
   return api.get(`/students?limit=${limit}&offset=${offset}`);
 };
 
-export const getStudentByRollNo = (rollNo) => {
-  return api.get(`/students/${rollNo}`);
+export const getStudentById = (studentId) => {
+  return api.get(`/students/${studentId}`);
 };
+
+// Backward-compatible alias
+export const getStudentByRollNo = (studentId) => getStudentById(studentId);
 
 export const createStudent = (studentData) => {
   return api.post('/students', studentData);
 };
 
-export const updateStudent = (rollNo, studentData) => {
-  return api.put(`/students/${rollNo}`, studentData);
+export const updateStudent = (studentId, studentData) => {
+  return api.put(`/students/${studentId}`, studentData);
 };
 
-export const deleteStudent = (rollNo) => {
-  return api.delete(`/students/${rollNo}`);
+export const deleteStudent = (studentId) => {
+  return api.delete(`/students/${studentId}`);
 };
 
 export const getStudentsByClass = (className) => {
@@ -51,8 +55,8 @@ export const explainPrediction = (studentData) => {
   return api.post('/prediction/explain', studentData);
 };
 
-export const getPredictionHistory = (rollNo) => {
-  return api.get(`/prediction/history/${rollNo}`);
+export const getPredictionHistory = (studentId) => {
+  return api.get(`/prediction/history/${studentId}`);
 };
 
 // Analytics APIs
@@ -66,6 +70,10 @@ export const getRiskFactors = () => {
 
 export const getTrends = () => {
   return api.get('/analytics/trends');
+};
+
+export const getStudentClusters = (k = 3) => {
+  return api.get(`/analytics/clusters?k=${k}`);
 };
 
 export default api;

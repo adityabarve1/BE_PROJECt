@@ -2,7 +2,7 @@
 Analytics and statistics routes
 """
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from app.models.student import StudentModel, SupabaseClient
 
 bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
@@ -143,6 +143,95 @@ def get_trends():
             'data': trends
         }), 200
         
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+
+@bp.route('/clusters', methods=['GET'])
+def get_student_clusters():
+    """Return fast risk-band clusters for analytics UI.
+
+    This route intentionally avoids heavy ML compute at request time to keep
+    dashboard responses fast and predictable.
+    """
+    try:
+        limit = request.args.get('limit', default=500, type=int)
+        limit = max(50, min(limit, 2000))
+        students = StudentModel.get_all_students(limit=limit, offset=0) or []
+
+        if len(students) < 3:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'message': 'Need at least 3 students for clustering',
+                    'clusters': [],
+                    'cluster_summary': {}
+                }
+            }), 200
+
+        n_clusters = 3
+
+        cluster_summary = {}
+        clusters = []
+
+        def compute_risk_band(student):
+            """Assign 0/1/2 band from existing risk fields quickly."""
+            risk_score = float(student.get('risk_score') or 0)
+            attendance = float(student.get('attendance') or 0)
+            marks = float(student.get('marks') or 0)
+
+            if risk_score >= 0.67 or attendance < 50 or marks < 40:
+                return 2  # high-risk band
+            if risk_score >= 0.34 or attendance < 75 or marks < 60:
+                return 1  # medium-risk band
+            return 0      # low-risk band
+
+        for student in students:
+            label = compute_risk_band(student)
+            cluster_key = str(label)
+
+            if cluster_key not in cluster_summary:
+                cluster_summary[cluster_key] = {
+                    'count': 0,
+                    'high_risk': 0,
+                    'avg_attendance': 0,
+                    'avg_marks': 0,
+                }
+
+            cluster_summary[cluster_key]['count'] += 1
+            if student.get('dropout_risk') == 'High':
+                cluster_summary[cluster_key]['high_risk'] += 1
+            cluster_summary[cluster_key]['avg_attendance'] += float(student.get('attendance') or 0)
+            cluster_summary[cluster_key]['avg_marks'] += float(student.get('marks') or 0)
+
+            clusters.append({
+                'student_id': student.get('student_id'),
+                'student_name': student.get('student_name'),
+                'class': student.get('class'),
+                'cluster': label,
+                'dropout_risk': student.get('dropout_risk'),
+                'risk_score': student.get('risk_score')
+            })
+
+        for key, summary in cluster_summary.items():
+            count = summary['count'] or 1
+            summary['avg_attendance'] = round(summary['avg_attendance'] / count, 2)
+            summary['avg_marks'] = round(summary['avg_marks'] / count, 2)
+            summary['high_risk_percentage'] = round(summary['high_risk'] * 100.0 / count, 2)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'k': n_clusters,
+                'clusters': clusters,
+                'cluster_summary': cluster_summary,
+                'centroids': []
+            }
+        }), 200
+
     except Exception as e:
         return jsonify({
             'error': str(e),

@@ -5,6 +5,7 @@ Database models for student data
 from datetime import datetime
 from supabase import create_client
 import os
+import re
 
 
 class SupabaseClient:
@@ -24,6 +25,49 @@ class StudentModel:
     """Model for student data"""
     
     TABLE_NAME = 'students'
+
+    @staticmethod
+    def _extract_missing_column(error):
+        """Extract missing column name from PostgREST schema cache errors."""
+        message = str(error)
+        match = re.search(r"Could not find the '([^']+)' column", message)
+        return match.group(1) if match else None
+
+    @staticmethod
+    def _insert_with_schema_fallback(client, payload):
+        """
+        Insert payload into students table and retry if PostgREST reports
+        missing columns in schema cache.
+        """
+        if isinstance(payload, dict):
+            working_payload = payload.copy()
+        else:
+            working_payload = [row.copy() for row in payload]
+
+        # Guard to avoid infinite retry loops on repeated failures.
+        for _ in range(5):
+            try:
+                response = client.table(StudentModel.TABLE_NAME).insert(working_payload).execute()
+                return response
+            except Exception as e:
+                missing_col = StudentModel._extract_missing_column(e)
+                if not missing_col:
+                    raise
+
+                if isinstance(working_payload, dict):
+                    if missing_col not in working_payload:
+                        raise
+                    working_payload.pop(missing_col, None)
+                else:
+                    removed = False
+                    for row in working_payload:
+                        if missing_col in row:
+                            row.pop(missing_col, None)
+                            removed = True
+                    if not removed:
+                        raise
+
+        raise RuntimeError("Student insert failed after schema-fallback retries")
     
     @staticmethod
     def create_student(student_data):
@@ -44,13 +88,16 @@ class StudentModel:
             'income': student_data.get('income'),
             'parent_occupation': student_data.get('parent_occupation'),
             'location': student_data.get('location'),
+            'student_phone': student_data.get('student_phone'),
+            'parent_phone': student_data.get('parent_phone'),
+            'parent_email': student_data.get('parent_email'),
             'dropout_risk': student_data.get('dropout_risk'),
             'risk_score': student_data.get('risk_score'),
             'created_by': student_data.get('created_by'),
             'created_at': datetime.utcnow().isoformat()
         }
         
-        response = client.table(StudentModel.TABLE_NAME).insert(data).execute()
+        response = StudentModel._insert_with_schema_fallback(client, data)
         return response.data[0] if response.data else None
     
     @staticmethod
@@ -75,12 +122,15 @@ class StudentModel:
                 'income': student_data.get('income'),
                 'parent_occupation': student_data.get('parent_occupation'),
                 'location': student_data.get('location'),
+                'student_phone': student_data.get('student_phone'),
+                'parent_phone': student_data.get('parent_phone'),
+                'parent_email': student_data.get('parent_email'),
                 'created_by': student_data.get('created_by'),
                 'created_at': datetime.utcnow().isoformat()
             }
             data_list.append(data)
         
-        response = client.table(StudentModel.TABLE_NAME).insert(data_list).execute()
+        response = StudentModel._insert_with_schema_fallback(client, data_list)
         return response.data
     
     @staticmethod
@@ -96,6 +146,16 @@ class StudentModel:
         client = SupabaseClient.get_instance()
         response = client.table(StudentModel.TABLE_NAME).select("*").eq('roll_no', roll_no).eq('class', class_name).eq('admission_year', admission_year).execute()
         return response.data[0] if response.data else None
+
+    @staticmethod
+    def get_students_by_ids(student_ids):
+        """Get all students matching a list of student IDs"""
+        if not student_ids:
+            return []
+
+        client = SupabaseClient.get_instance()
+        response = client.table(StudentModel.TABLE_NAME).select("*").in_('student_id', student_ids).execute()
+        return response.data or []
     
     @staticmethod
     def get_all_students(limit=100, offset=0):
@@ -265,3 +325,142 @@ class PredictionHistoryModel:
         client = SupabaseClient.get_instance()
         response = client.table(PredictionHistoryModel.TABLE_NAME).select("*").eq('student_id', student_id).order('created_at', desc=True).execute()
         return response.data
+
+
+class InterventionModel:
+    """Model for intervention plans"""
+
+    TABLE_NAME = 'interventions'
+
+    @staticmethod
+    def get_student_interventions(student_id, limit=20):
+        """Get interventions for a student"""
+        client = SupabaseClient.get_instance()
+        response = (
+            client.table(InterventionModel.TABLE_NAME)
+            .select("*")
+            .eq('student_id', student_id)
+            .order('created_at', desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return response.data or []
+
+
+class MeetingScheduleModel:
+    """Model for parent-student meeting schedules"""
+
+    TABLE_NAME = 'meeting_schedules'
+
+    @staticmethod
+    def get_student_meetings(student_id, limit=20):
+        """Get meetings for a student"""
+        client = SupabaseClient.get_instance()
+        response = (
+            client.table(MeetingScheduleModel.TABLE_NAME)
+            .select("*")
+            .eq('student_id', student_id)
+            .order('meeting_date', desc=False)
+            .limit(limit)
+            .execute()
+        )
+        return response.data or []
+
+    @staticmethod
+    def create_meeting(meeting_data):
+        """Create a single meeting/notice record"""
+        client = SupabaseClient.get_instance()
+
+        data = {
+            'student_id': meeting_data['student_id'],
+            'teacher_id': meeting_data.get('teacher_id'),
+            'meeting_date': meeting_data['meeting_date'],
+            'meeting_type': meeting_data.get('meeting_type', 'Follow-up'),
+            'description': meeting_data.get('description'),
+            'status': meeting_data.get('status', 'Scheduled'),
+            'outcome': meeting_data.get('outcome'),
+            'created_at': datetime.utcnow().isoformat(),
+        }
+
+        response = client.table(MeetingScheduleModel.TABLE_NAME).insert(data).execute()
+        return response.data[0] if response.data else None
+
+    @staticmethod
+    def bulk_create_meetings(meetings_data):
+        """Bulk create meeting/notice records"""
+        if not meetings_data:
+            return []
+
+        client = SupabaseClient.get_instance()
+        now = datetime.utcnow().isoformat()
+        payload = []
+
+        for meeting_data in meetings_data:
+            payload.append({
+                'student_id': meeting_data['student_id'],
+                'teacher_id': meeting_data.get('teacher_id'),
+                'meeting_date': meeting_data['meeting_date'],
+                'meeting_type': meeting_data.get('meeting_type', 'Follow-up'),
+                'description': meeting_data.get('description'),
+                'status': meeting_data.get('status', 'Scheduled'),
+                'outcome': meeting_data.get('outcome'),
+                'created_at': now,
+            })
+
+        response = client.table(MeetingScheduleModel.TABLE_NAME).insert(payload).execute()
+        return response.data or []
+
+    @staticmethod
+    def get_teacher_meetings(teacher_id, limit=100):
+        """Get meetings/notices published by a teacher"""
+        client = SupabaseClient.get_instance()
+        response = (
+            client.table(MeetingScheduleModel.TABLE_NAME)
+            .select("*")
+            .eq('teacher_id', teacher_id)
+            .order('created_at', desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return response.data or []
+
+    @staticmethod
+    def get_meeting_by_id(meeting_id):
+        """Get meeting by primary key id"""
+        client = SupabaseClient.get_instance()
+        response = (
+            client.table(MeetingScheduleModel.TABLE_NAME)
+            .select("*")
+            .eq('id', meeting_id)
+            .limit(1)
+            .execute()
+        )
+        return response.data[0] if response.data else None
+
+    @staticmethod
+    def update_meeting(meeting_id, update_data):
+        """Update meeting by id"""
+        client = SupabaseClient.get_instance()
+        update_data['updated_at'] = datetime.utcnow().isoformat()
+        response = (
+            client.table(MeetingScheduleModel.TABLE_NAME)
+            .update(update_data)
+            .eq('id', meeting_id)
+            .execute()
+        )
+        return response.data[0] if response.data else None
+
+    @staticmethod
+    def delete_meetings_by_ids(meeting_ids):
+        """Delete multiple meeting records by ids"""
+        if not meeting_ids:
+            return []
+
+        client = SupabaseClient.get_instance()
+        response = (
+            client.table(MeetingScheduleModel.TABLE_NAME)
+            .delete()
+            .in_('id', meeting_ids)
+            .execute()
+        )
+        return response.data or []

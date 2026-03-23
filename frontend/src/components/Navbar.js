@@ -16,7 +16,13 @@ import {
   Divider,
   useScrollTrigger,
   Slide,
-  alpha
+  alpha,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -25,10 +31,11 @@ import {
   PsychologyAlt as PredictIcon,
   CloudUpload as UploadIcon,
   Edit as EditIcon,
-  AccountCircle,
   Logout,
   Settings,
-  Person
+  Person,
+  Menu as MenuIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import LanguageSelector from './LanguageSelector';
@@ -50,6 +57,7 @@ const Navbar = (props) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -85,6 +93,7 @@ const Navbar = (props) => {
   };
 
   return (
+    <>
     <HideOnScroll {...props}>
       <AppBar 
         position="sticky" 
@@ -100,6 +109,14 @@ const Navbar = (props) => {
       >
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ py: 1 }}>
+            {/* Hamburger button — mobile only */}
+            <IconButton
+              sx={{ display: { xs: 'flex', md: 'none' }, mr: 1, color: 'white' }}
+              onClick={() => setMobileOpen(true)}
+              aria-label="open navigation menu"
+            >
+              <MenuIcon />
+            </IconButton>
             {/* Logo & Brand */}
             <Box
               component={Link}
@@ -147,8 +164,8 @@ const Navbar = (props) => {
               </Typography>
             </Box>
 
-            {/* Navigation Items */}
-            <Box sx={{ flexGrow: 1, display: 'flex', gap: 0.5 }}>
+            {/* Navigation Items — desktop only */}
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, gap: 0.5 }}>
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
@@ -200,13 +217,14 @@ const Navbar = (props) => {
             </Box>
 
             {/* User Menu */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1, md: 2 }, ml: { xs: 0, sm: 2 } }}>
               <LanguageSelector />
               
               <Chip
                 icon={<Person sx={{ color: 'white !important' }} />}
                 label={user?.full_name || user?.email || t('common.teacher') || 'Teacher'}
                 sx={{
+                  display: { xs: 'none', sm: 'flex' },
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%)',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(255,255,255,0.2)',
@@ -338,6 +356,128 @@ const Navbar = (props) => {
         </Container>
       </AppBar>
     </HideOnScroll>
+
+    {/* Mobile Navigation Drawer */}
+    <Drawer
+      variant="temporary"
+      anchor="left"
+      open={mobileOpen}
+      onClose={() => setMobileOpen(false)}
+      ModalProps={{ keepMounted: true }}
+      sx={{
+        display: { xs: 'block', md: 'none' },
+        '& .MuiDrawer-paper': { width: 270, boxSizing: 'border-box' },
+      }}
+    >
+      {/* Drawer header with gradient */}
+      <Box
+        sx={{
+          p: 2,
+          background: 'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36, height: 36, borderRadius: '10px',
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <PredictIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'white' }}>
+              {t('app_name')}
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setMobileOpen(false)} sx={{ color: 'white' }} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 38, height: 38,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              fontSize: '0.875rem', fontWeight: 700,
+            }}
+          >
+            {getInitials(user?.full_name || user?.email)}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: 'white', lineHeight: 1.3 }}>
+              {user?.full_name || 'Teacher'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.7rem' }}>
+              {user?.email}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+      <Divider />
+
+      {/* Navigation links */}
+      <List sx={{ pt: 1, px: 0.5 }}>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                onClick={() => setMobileOpen(false)}
+                sx={{
+                  borderRadius: 2,
+                  background: isActive
+                    ? 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(96,165,250,0.08))'
+                    : 'transparent',
+                  border: `1px solid ${isActive ? 'rgba(37,99,235,0.2)' : 'transparent'}`,
+                  '&:hover': { background: 'rgba(37,99,235,0.06)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40, color: isActive ? 'primary.main' : 'text.secondary' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? 'primary.main' : 'text.primary',
+                    fontSize: '0.9rem',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+
+      <Box sx={{ flexGrow: 1 }} />
+      <Divider />
+
+      {/* Logout */}
+      <List sx={{ pb: 1, px: 0.5 }}>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => { handleLogout(); setMobileOpen(false); }}
+            sx={{
+              borderRadius: 2,
+              '&:hover': { background: alpha('#EF4444', 0.08) },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: 'error.main' }}>
+              <Logout />
+            </ListItemIcon>
+            <ListItemText
+              primary={t('nav.logout')}
+              primaryTypographyProps={{ fontWeight: 600, color: 'error.main', fontSize: '0.9rem' }}
+            />
+          </ListItemButton>
+        </ListItem>
+      </List>
+    </Drawer>
+    </>
   );
 };
 

@@ -270,6 +270,18 @@ const Login = () => {
                   Create Account
                 </Link>
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+                <Link 
+                  to="/portal/access" 
+                  style={{ 
+                    color: theme.palette.success.main,
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                  }}
+                >
+                  {t('portal.family_access_link')}
+                </Link>
+              </Typography>
             </Box>
           </form>
         </Paper>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -19,6 +19,8 @@ import PredictionForm from './pages/PredictionForm';
 import Analytics from './pages/Analytics';
 import DocumentUpload from './pages/DocumentUpload';
 import ClassView from './pages/ClassView';
+import PortalAccess from './pages/PortalAccess';
+import FamilyPortalDashboard from './pages/FamilyPortalDashboard';
 
 // Components
 import Navbar from './components/Navbar';
@@ -26,6 +28,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Context
 import { AuthProvider } from './contexts/AuthContext';
+import { PortalProvider } from './contexts/PortalContext';
+import PortalProtectedRoute from './components/PortalProtectedRoute';
+import PortalNavbar from './components/PortalNavbar';
 
 const theme = createTheme({
   palette: {
@@ -175,20 +180,44 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <Box
-            className="App"
-            sx={{
-              minHeight: '100vh',
-              background: 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%)',
-              backgroundAttachment: 'fixed',
-            }}
-          >
-            <Routes>
+        <PortalProvider>
+          <Router>
+            <Box
+              className="App"
+              sx={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%)',
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/portal/access" element={<PortalAccess />} />
+              <Route
+                path="/portal/student"
+                element={
+                  <PortalProtectedRoute role="student">
+                    <>
+                      <PortalNavbar />
+                      <FamilyPortalDashboard role="student" />
+                    </>
+                  </PortalProtectedRoute>
+                }
+              />
+              <Route
+                path="/portal/parent"
+                element={
+                  <PortalProtectedRoute role="parent">
+                    <>
+                      <PortalNavbar />
+                      <FamilyPortalDashboard role="parent" />
+                    </>
+                  </PortalProtectedRoute>
+                }
+              />
               
               {/* Protected Routes */}
               <Route
@@ -268,10 +297,11 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
-            <ToastContainer position="top-right" autoClose={3000} />
-          </Box>
-        </Router>
+              </Routes>
+              <ToastContainer position="top-right" autoClose={3000} />
+            </Box>
+          </Router>
+        </PortalProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -61,13 +61,7 @@ const PredictionForm = () => {
   };
 
   // Fetch students when class and year are selected
-  useEffect(() => {
-    if (selectedClass && admissionYear) {
-      fetchStudents();
-    }
-  }, [selectedClass, admissionYear]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setLoadingStudents(true);
     try {
       const response = await axios.get(
@@ -82,7 +76,13 @@ const PredictionForm = () => {
     } finally {
       setLoadingStudents(false);
     }
-  };
+  }, [admissionYear, selectedClass]);
+
+  useEffect(() => {
+    if (selectedClass && admissionYear) {
+      fetchStudents();
+    }
+  }, [selectedClass, admissionYear, fetchStudents]);
 
   const handleStudentPrediction = async () => {
     if (!selectedStudent) {

@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS students (
     gender VARCHAR(20) NOT NULL CHECK (gender IN ('Male', 'Female')),
     class VARCHAR(10) NOT NULL,
     parent_occupation VARCHAR(100),
+    student_phone VARCHAR(20),
+    parent_phone VARCHAR(20),
+    parent_email VARCHAR(255),
     location VARCHAR(50) CHECK (location IN ('Rural', 'Urban', 'City')),
     dropout_risk VARCHAR(20) CHECK (dropout_risk IN ('Low', 'High')),
     risk_score DECIMAL(5,4) CHECK (risk_score >= 0 AND risk_score <= 1),
@@ -244,8 +247,9 @@ FROM students s
 LEFT JOIN prediction_history ph ON s.student_id = ph.student_id
 WHERE s.dropout_risk = 'High'
 GROUP BY s.id, s.student_id, s.student_name, s.roll_no, s.admission_year, s.date_of_birth, 
-         s.password_hash, s.attendance, s.marks, s.income, s.gender, s.class, 
-         s.parent_occupation, s.location, s.dropout_risk, s.risk_score, 
+         s.password_hash, s.attendance, s.marks, s.income, s.gender, s.class,
+         s.parent_occupation, s.student_phone, s.parent_phone, s.parent_email,
+         s.location, s.dropout_risk, s.risk_score,
          s.created_by, s.created_at, s.updated_at;
 
 -- View for student statistics by class

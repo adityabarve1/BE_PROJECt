@@ -57,6 +57,46 @@ export const explainPrediction = (studentData) => {
 
 export const getPredictionHistory = (studentId) => {
   return api.get(`/prediction/history/${studentId}`);
+
+};
+
+// Portal APIs
+export const studentPortalAccess = (credentials) => {
+  return api.post('/portal/student/access', credentials);
+};
+
+export const parentPortalAccess = (credentials) => {
+  return api.post('/portal/parent/access', credentials);
+};
+
+export const getStudentPortalOverview = (studentId) => {
+  return api.get(`/portal/student/${studentId}/overview`);
+};
+
+export const getParentPortalOverview = (studentId) => {
+  return api.get(`/portal/parent/${studentId}/overview`);
+};
+
+// Meeting/Follow-up APIs
+export const publishMeetingNotice = (payload) => {
+  return api.post('/meetings/publish', payload);
+};
+
+export const getTeacherPublications = (teacherId, limit = 50) => {
+  return api.get(`/meetings/teacher/${teacherId}?limit=${limit}`);
+};
+
+export const getTeacherPublicationSummary = (teacherId, limit = 2000) => {
+  return api.get(`/meetings/teacher/${teacherId}/summary?limit=${limit}`);
+};
+
+export const deleteTeacherPublication = (teacherId, publicationId) => {
+  return api.delete(`/meetings/teacher/${teacherId}/publication/${publicationId}`);
+};
+
+export const acknowledgeStudentMeeting = (studentId, payload) => {
+  return api.post(`/meetings/student/${studentId}/acknowledge`, payload);
+
 };
 
 // Analytics APIs
@@ -72,8 +112,10 @@ export const getTrends = () => {
   return api.get('/analytics/trends');
 };
 
-export const getStudentClusters = (k = 3) => {
-  return api.get(`/analytics/clusters?k=${k}`);
+
+export const getStudentClusters = (k = 3, limit = 2000) => {
+  return api.get(`/analytics/clusters?k=${k}&limit=${limit}`);
+
 };
 
 export default api;

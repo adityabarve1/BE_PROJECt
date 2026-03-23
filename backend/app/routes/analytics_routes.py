@@ -2,6 +2,7 @@
 Analytics and statistics routes
 """
 
+from datetime import datetime
 from flask import Blueprint, jsonify, request
 from app.models.student import StudentModel, SupabaseClient
 
@@ -10,13 +11,17 @@ bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
 @bp.route('/dashboard', methods=['GET'])
 def get_dashboard_stats():
-    """Get overall dashboard statistics"""
+    """Get overall dashboard statistics with extended analytics"""
     try:
         client = SupabaseClient.get_instance()
         
         # Total students
         total_students_response = client.table('students').select('count', count='exact').execute()
         total_students = total_students_response.count
+        
+        # All students data
+        all_students_response = client.table('students').select('*').execute()
+        all_students = all_students_response.data or []
         
         # High risk students
         high_risk_response = client.table('students').select('count', count='exact').eq('dropout_risk', 'High').execute()
@@ -46,6 +51,53 @@ def get_dashboard_stats():
             if record.get('dropout_risk') == 'High':
                 location_stats[loc]['high_risk'] += 1
         
+        # Gender distribution
+        gender_stats = {}
+        for student in all_students:
+            gender = student.get('gender', 'Unknown')
+            if gender not in gender_stats:
+                gender_stats[gender] = {'total': 0, 'high_risk': 0}
+            gender_stats[gender]['total'] += 1
+            if student.get('dropout_risk') == 'High':
+                gender_stats[gender]['high_risk'] += 1
+        
+        # Income distribution
+        income_stats = {}
+        for student in all_students:
+            income = student.get('income', 'Unknown')
+            if income not in income_stats:
+                income_stats[income] = {'total': 0, 'high_risk': 0}
+            income_stats[income]['total'] += 1
+            if student.get('dropout_risk') == 'High':
+                income_stats[income]['high_risk'] += 1
+        
+        # Calculate average attendance and marks
+        attendances = [float(s.get('attendance', 0)) for s in all_students if s.get('attendance')]
+        marks = [float(s.get('marks', 0)) for s in all_students if s.get('marks')]
+        
+        avg_attendance = sum(attendances) / len(attendances) if attendances else 0
+        avg_marks = sum(marks) / len(marks) if marks else 0
+        
+        # Top 5 high-risk students
+        high_risk_students = sorted(
+            [s for s in all_students if s.get('dropout_risk') == 'High'],
+            key=lambda x: float(x.get('attendance', 100)),
+            reverse=False
+        )[:5]
+        
+        top_risk = []
+        for student in high_risk_students:
+            top_risk.append({
+                'id': student.get('id'),
+                'name': student.get('name'),
+                'roll_no': student.get('roll_no'),
+                'class': student.get('class'),
+                'attendance': float(student.get('attendance', 0)),
+                'marks': float(student.get('marks', 0)),
+                'income': student.get('income'),
+                'location': student.get('location'),
+            })
+        
         return jsonify({
             'success': True,
             'data': {
@@ -53,8 +105,13 @@ def get_dashboard_stats():
                 'high_risk_count': high_risk_count,
                 'low_risk_count': low_risk_count,
                 'risk_percentage': round(risk_percentage, 2),
+                'avg_attendance': round(avg_attendance, 2),
+                'avg_marks': round(avg_marks, 2),
                 'class_distribution': class_distribution,
-                'location_stats': location_stats
+                'location_stats': location_stats,
+                'gender_stats': gender_stats,
+                'income_stats': income_stats,
+                'top_risk_students': top_risk,
             }
         }), 200
         
@@ -75,7 +132,10 @@ def get_risk_factors():
             return jsonify({
                 'success': True,
                 'data': {
-                    'message': 'No high-risk students found'
+                    'message': 'No high-risk students found',
+                    'factors': {},
+                    'total_high_risk_students': 0,
+                    'percentage_basis': 'high_risk_students'
                 }
             }), 200
         
@@ -107,7 +167,11 @@ def get_risk_factors():
         
         return jsonify({
             'success': True,
-            'data': risk_factors
+            'data': {
+                'factors': risk_factors,
+                'total_high_risk_students': total,
+                'percentage_basis': 'high_risk_students'
+            }
         }), 200
         
     except Exception as e:
@@ -158,9 +222,19 @@ def get_student_clusters():
     dashboard responses fast and predictable.
     """
     try:
-        limit = request.args.get('limit', default=500, type=int)
-        limit = max(50, min(limit, 2000))
+
+        requested_k = request.args.get('k', default=3, type=int)
+        limit = request.args.get('limit', default=2000, type=int)
+        limit = max(50, min(limit, 5000))
+
+        client = SupabaseClient.get_instance()
+        total_students_response = client.table('students').select('count', count='exact').execute()
+        total_students = total_students_response.count or 0
+
         students = StudentModel.get_all_students(limit=limit, offset=0) or []
+        sampled_students = len(students)
+        sample_truncated = total_students > sampled_students
+
 
         if len(students) < 3:
             return jsonify({
@@ -168,7 +242,18 @@ def get_student_clusters():
                 'data': {
                     'message': 'Need at least 3 students for clustering',
                     'clusters': [],
-                    'cluster_summary': {}
+                    'cluster_summary': {},
+                    'meta': {
+                        'generated_at': datetime.utcnow().isoformat() + 'Z',
+                        'refresh_type': 'polling',
+                        'recommended_refresh_seconds': 15,
+                        'requested_k': requested_k,
+                        'applied_k': 3,
+                        'total_students': total_students,
+                        'sampled_students': sampled_students,
+                        'sample_truncated': sample_truncated,
+                    }
+
                 }
             }), 200
 
@@ -228,7 +313,18 @@ def get_student_clusters():
                 'k': n_clusters,
                 'clusters': clusters,
                 'cluster_summary': cluster_summary,
-                'centroids': []
+                'centroids': [],
+                'meta': {
+                    'generated_at': datetime.utcnow().isoformat() + 'Z',
+                    'refresh_type': 'polling',
+                    'recommended_refresh_seconds': 15,
+                    'requested_k': requested_k,
+                    'applied_k': n_clusters,
+                    'total_students': total_students,
+                    'sampled_students': sampled_students,
+                    'sample_truncated': sample_truncated,
+                }
+
             }
         }), 200
 

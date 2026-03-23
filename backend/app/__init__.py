@@ -21,7 +21,9 @@ def create_app(config_class=Config):
         student_routes,
         analytics_routes,
         auth_routes,
-        document_routes
+        document_routes,
+        portal_routes,
+        meeting_routes
     )
     
     app.register_blueprint(auth_routes.bp)
@@ -29,6 +31,8 @@ def create_app(config_class=Config):
     app.register_blueprint(prediction_routes.bp)
     app.register_blueprint(student_routes.bp)
     app.register_blueprint(analytics_routes.bp)
+    app.register_blueprint(portal_routes.bp)
+    app.register_blueprint(meeting_routes.bp)
     
     @app.route('/health')
     def health_check():

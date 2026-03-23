@@ -162,6 +162,26 @@ const LandingPage = () => {
                   {t('landing.get_started')}
                 </Button>
                 <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/portal/access')}
+                  sx={{
+                    bgcolor: '#0f766e',
+                    color: 'white',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    '&:hover': {
+                      bgcolor: '#115e59',
+                    },
+                  }}
+                >
+                  {t('landing.family_access')}
+                </Button>
+                <Button
                   variant="outlined"
                   size="large"
                   onClick={() => navigate('/login')}

@@ -110,8 +110,8 @@ const DocumentUpload = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+    <Container maxWidth="md" sx={{ mt: { xs: 2, md: 4 }, mb: 4, px: { xs: 1.5, sm: 2 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
         <Typography variant="h4" gutterBottom>
           Upload Document
         </Typography>
@@ -138,7 +138,7 @@ const DocumentUpload = () => {
             ))}
           </TextField>
 
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
             <TextField
               select
               label="Class"
@@ -260,7 +260,7 @@ const DocumentUpload = () => {
             Required Excel Format:
           </Typography>
           <Typography variant="caption" component="div">
-            • <strong>Admission:</strong> Name, Roll No, Admission Year, Gender, Income, Parent Occupation, Location
+            • <strong>Admission:</strong> Name, Roll No, Gender, Income, Parent Occupation, Student Phone, Parent Phone, Parent Email, Location
           </Typography>
           <Typography variant="caption" component="div">
             • <strong>Attendance:</strong> Roll No, Student Name, Attendance (%)

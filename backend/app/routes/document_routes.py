@@ -107,40 +107,95 @@ def upload_admission_document():
         # Parse document
         students_data, errors = parse_admission_document(filepath, class_name, int(admission_year))
         
-        if errors:
+        if not students_data:
             DocumentUploadModel.update_upload_status(
                 upload_record['id'],
-                'completed' if students_data else 'failed',
-                len(students_data),
-                '; '.join(errors)
+                'failed',
+                0,
+                '; '.join(errors) if errors else 'No valid student records found'
             )
-        
-        if not students_data:
             return jsonify({
                 'error': 'No valid student records found',
                 'details': errors,
                 'success': False
             }), 400
-        
-        # Add teacher_id to each student record
+
+        # Remove duplicates within the uploaded file itself.
+        unique_students = []
+        seen_student_ids = set()
         for student in students_data:
+            student_id = student.get('student_id')
+            if not student_id:
+                continue
+
+            if student_id in seen_student_ids:
+                errors.append(f"Duplicate student in file skipped: {student_id}")
+                continue
+
+            seen_student_ids.add(student_id)
+            unique_students.append(student)
+
+        # Remove students that already exist in database.
+        existing_students = StudentModel.get_students_by_ids(list(seen_student_ids))
+        existing_ids = {student.get('student_id') for student in existing_students}
+
+        students_to_create = []
+        for student in unique_students:
+            if student.get('student_id') in existing_ids:
+                errors.append(f"Student already exists and was skipped: {student.get('student_id')}")
+                continue
+
+            # Keep duplicate safety by roll + class + admission year too.
+            duplicate_roll = StudentModel.get_student_by_roll_and_class(
+                student['roll_no'],
+                student['class'],
+                student['admission_year']
+            )
+            if duplicate_roll:
+                errors.append(
+                    f"Roll already exists in class/year and was skipped: {student['class']}"
+                    f"-{student['admission_year']}-Roll{student['roll_no']}"
+                )
+                continue
+
             student['created_by'] = teacher_id
-        
+            students_to_create.append(student)
+
+        if not students_to_create:
+            DocumentUploadModel.update_upload_status(
+                upload_record['id'],
+                'completed',
+                0,
+                '; '.join(errors) if errors else None
+            )
+            return jsonify({
+                'success': True,
+                'message': 'No new students were created. All rows were duplicates or invalid.',
+                'data': {
+                    'students_created': 0,
+                    'students_skipped': len(unique_students),
+                    'errors': errors,
+                    'upload_id': upload_record['id']
+                }
+            }), 200
+
         # Bulk create students
-        created_students = StudentModel.bulk_create_students(students_data)
-        
+        created_students = StudentModel.bulk_create_students(students_to_create)
+
         # Update upload record
         DocumentUploadModel.update_upload_status(
             upload_record['id'],
             'completed',
-            len(created_students)
+            len(created_students),
+            '; '.join(errors) if errors else None
         )
-        
+
         return jsonify({
             'success': True,
             'message': f'Successfully created {len(created_students)} student profiles',
             'data': {
                 'students_created': len(created_students),
+                'students_skipped': len(unique_students) - len(created_students),
                 'errors': errors,
                 'upload_id': upload_record['id']
             }

@@ -9,6 +9,34 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 
 
+def normalize_phone_number(phone_value) -> Optional[str]:
+    """Normalize phone values from Excel into a safe dialable string."""
+    if phone_value is None or pd.isna(phone_value):
+        return None
+
+    raw_value = str(phone_value).strip()
+    if not raw_value:
+        return None
+
+    digits = ''.join(ch for ch in raw_value if ch.isdigit())
+    if len(digits) < 10:
+        return None
+
+    return digits[-15:]
+
+
+def normalize_email(email_value) -> Optional[str]:
+    """Normalize and validate basic email format."""
+    if email_value is None or pd.isna(email_value):
+        return None
+
+    email = str(email_value).strip().lower()
+    if not email or '@' not in email:
+        return None
+
+    return email
+
+
 def generate_student_id(admission_year: int, class_num: str, roll_no: int) -> str:
     """
     Generate unique student ID in format: JP{YEAR}{CLASS:02d}{ROLL:03d}
@@ -41,6 +69,9 @@ def parse_admission_document(file_path: str, class_name: str, admission_year: in
     - Gender
     - Income / Family Income
     - Parent Occupation
+    - Student Phone
+    - Parent Phone
+    - Parent Email
     - Location
     - Date of Birth / DOB
     
@@ -69,6 +100,9 @@ def parse_admission_document(file_path: str, class_name: str, admission_year: in
             'gender': ['gender', 'sex'],
             'income': ['income', 'family_income', 'household_income'],
             'parent_occupation': ['parent_occupation', 'occupation', 'parents_occupation', 'guardian_occupation'],
+            'student_phone': ['student_phone', 'phone', 'mobile', 'student_mobile', 'contact_number', 'student_contact'],
+            'parent_phone': ['parent_phone', 'parent_mobile', 'guardian_phone', 'parent_contact', 'parent_number'],
+            'parent_email': ['parent_email', 'email', 'guardian_email', 'parent_mail'],
             'location': ['location', 'area', 'residence', 'address_type'],
             'date_of_birth': ['date_of_birth', 'dob', 'birth_date', 'birthdate']
         }
@@ -124,6 +158,21 @@ def parse_admission_document(file_path: str, class_name: str, admission_year: in
                 
                 if 'parent_occupation' in actual_columns and pd.notna(row[actual_columns['parent_occupation']]):
                     student_data['parent_occupation'] = str(row[actual_columns['parent_occupation']]).strip()
+
+                if 'student_phone' in actual_columns:
+                    student_phone = normalize_phone_number(row[actual_columns['student_phone']])
+                    if student_phone:
+                        student_data['student_phone'] = student_phone
+
+                if 'parent_phone' in actual_columns:
+                    parent_phone = normalize_phone_number(row[actual_columns['parent_phone']])
+                    if parent_phone:
+                        student_data['parent_phone'] = parent_phone
+
+                if 'parent_email' in actual_columns:
+                    parent_email = normalize_email(row[actual_columns['parent_email']])
+                    if parent_email:
+                        student_data['parent_email'] = parent_email
                 
                 if 'location' in actual_columns and pd.notna(row[actual_columns['location']]):
                     location = str(row[actual_columns['location']]).strip().capitalize()

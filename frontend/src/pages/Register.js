@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import {
   Container,
   Paper,
@@ -31,7 +30,6 @@ import { useAuth } from '../contexts/AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
-  const { t } = useTranslation();
   const theme = useTheme();
   
   const [formData, setFormData] = useState({

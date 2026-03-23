@@ -8,6 +8,27 @@ from app.models.student import StudentModel
 bp = Blueprint('students', __name__, url_prefix='/api/students')
 
 
+def unique_by_student_id(students):
+    """Drop accidental duplicate rows and keep the latest record per student_id."""
+    unique_students = {}
+    for student in students or []:
+        student_id = student.get('student_id')
+        if not student_id:
+            continue
+
+        existing = unique_students.get(student_id)
+        if not existing:
+            unique_students[student_id] = student
+            continue
+
+        existing_updated = existing.get('updated_at') or existing.get('created_at') or ''
+        current_updated = student.get('updated_at') or student.get('created_at') or ''
+        if current_updated >= existing_updated:
+            unique_students[student_id] = student
+
+    return list(unique_students.values())
+
+
 @bp.route('/', methods=['GET'])
 def get_all_students():
     """Get all students with pagination"""
@@ -16,11 +37,12 @@ def get_all_students():
         offset = request.args.get('offset', 0, type=int)
         
         students = StudentModel.get_all_students(limit=limit, offset=offset)
-        
+        unique_students = unique_by_student_id(students)
+
         return jsonify({
             'success': True,
-            'data': students,
-            'count': len(students)
+            'data': unique_students,
+            'count': len(unique_students)
         }), 200
         
     except Exception as e:
@@ -79,6 +101,17 @@ def create_student():
         if existing_student:
             return jsonify({
                 'error': 'Student with this ID already exists',
+                'success': False
+            }), 409
+
+        duplicate_roll = StudentModel.get_student_by_roll_and_class(
+            data['roll_no'],
+            data['class'],
+            data['admission_year']
+        )
+        if duplicate_roll:
+            return jsonify({
+                'error': 'Student with this roll number already exists in this class and admission year',
                 'success': False
             }), 409
         
@@ -162,11 +195,13 @@ def get_students_by_class(class_name):
             students = StudentModel.get_students_by_class_and_year(class_name, int(admission_year))
         else:
             students = StudentModel.get_students_by_class(class_name)
-        
+
+        unique_students = unique_by_student_id(students)
+
         return jsonify({
             'success': True,
-            'data': students,
-            'count': len(students)
+            'data': unique_students,
+            'count': len(unique_students)
         }), 200
         
     except Exception as e:

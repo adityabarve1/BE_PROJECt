@@ -7,11 +7,13 @@ import {
   Box,
   CircularProgress,
   Chip,
+
   Button,
   Stack,
   FormControlLabel,
   Switch,
   Alert,
+
 } from '@mui/material';
 import { getRiskFactors, getStudentClusters } from '../services/api';
 import { toast } from 'react-toastify';
@@ -19,6 +21,7 @@ import { toast } from 'react-toastify';
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [riskFactors, setRiskFactors] = useState(null);
+
   const [riskFactorTotal, setRiskFactorTotal] = useState(0);
   const [clusterData, setClusterData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,9 +35,19 @@ const Analytics = () => {
       setRefreshing(true);
     }
 
+  const [clusterData, setClusterData] = useState(null);
+
+  useEffect(() => {
+    fetchAnalytics();
+
+    const timer = setInterval(fetchAnalytics, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
     try {
       const [riskResult, clusterResult] = await Promise.allSettled([
         getRiskFactors(),
+
         getStudentClusters(3, 2000),
       ]);
 
@@ -48,6 +61,7 @@ const Analytics = () => {
           setRiskFactors(payload || null);
           setRiskFactorTotal(0);
         }
+
       } else {
         toast.error('Risk factors could not be loaded');
       }
@@ -58,7 +72,9 @@ const Analytics = () => {
         toast.error('Cluster analytics is slow/unavailable right now');
       }
 
+
       setLastUpdated(new Date());
+
       setLoading(false);
     } catch (error) {
       toast.error('Failed to load analytics');
@@ -189,7 +205,6 @@ const Analytics = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Clustering uses 7 features: attendance, marks, risk score, gender, income, location, and class.
             </Typography>
-
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
               <Chip
                 label={`Mode: ${clusterData?.meta?.refresh_type || 'polling'} every ${clusterData?.meta?.recommended_refresh_seconds || 15}s`}
@@ -209,6 +224,7 @@ const Analytics = () => {
                 />
               )}
             </Stack>
+
 
             <Grid container spacing={2}>
               {clusterData && clusterData.message && (

@@ -222,6 +222,7 @@ def get_student_clusters():
     dashboard responses fast and predictable.
     """
     try:
+
         requested_k = request.args.get('k', default=3, type=int)
         limit = request.args.get('limit', default=2000, type=int)
         limit = max(50, min(limit, 5000))
@@ -233,6 +234,7 @@ def get_student_clusters():
         students = StudentModel.get_all_students(limit=limit, offset=0) or []
         sampled_students = len(students)
         sample_truncated = total_students > sampled_students
+
 
         if len(students) < 3:
             return jsonify({
@@ -251,6 +253,7 @@ def get_student_clusters():
                         'sampled_students': sampled_students,
                         'sample_truncated': sample_truncated,
                     }
+
                 }
             }), 200
 
@@ -321,6 +324,7 @@ def get_student_clusters():
                     'sampled_students': sampled_students,
                     'sample_truncated': sample_truncated,
                 }
+
             }
         }), 200
 

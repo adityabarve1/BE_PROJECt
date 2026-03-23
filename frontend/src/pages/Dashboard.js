@@ -55,6 +55,7 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+
   const fetchDashboardStats = async () => {
     try {
       const response = await getDashboardStats();

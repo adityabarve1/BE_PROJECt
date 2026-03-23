@@ -57,6 +57,7 @@ export const explainPrediction = (studentData) => {
 
 export const getPredictionHistory = (studentId) => {
   return api.get(`/prediction/history/${studentId}`);
+
 };
 
 // Portal APIs
@@ -95,6 +96,7 @@ export const deleteTeacherPublication = (teacherId, publicationId) => {
 
 export const acknowledgeStudentMeeting = (studentId, payload) => {
   return api.post(`/meetings/student/${studentId}/acknowledge`, payload);
+
 };
 
 // Analytics APIs
@@ -110,8 +112,10 @@ export const getTrends = () => {
   return api.get('/analytics/trends');
 };
 
+
 export const getStudentClusters = (k = 3, limit = 2000) => {
   return api.get(`/analytics/clusters?k=${k}&limit=${limit}`);
+
 };
 
 export default api;

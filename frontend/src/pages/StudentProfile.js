@@ -5,6 +5,7 @@ import {
   Stack, Button, Avatar, Card, CardContent, TextField, MenuItem,
   LinearProgress, Alert, Divider,
 } from '@mui/material';
+
 import {
   ArrowBack as ArrowBackIcon,
   Call as CallIcon,
@@ -24,6 +25,7 @@ import {
   Tooltip as RechartTooltip, Legend,
 } from 'recharts';
 import { getStudentById, getPredictionHistory, updateStudent, publishMeetingNotice, deleteStudent } from '../services/api';
+
 import { toast } from 'react-toastify';
 
 const MEETING_TYPES = ['Class Follow-up', 'Parent Meeting', 'Academic Alert', 'General Notice', 'Counselling Support'];
@@ -79,11 +81,13 @@ const SectionCard = ({ icon, title, color = 'primary', children }) => (
 
 const StudentProfile = () => {
   const { studentId } = useParams();
+
   const navigate = useNavigate();
 
   const [student, setStudent] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+
 
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -98,6 +102,7 @@ const StudentProfile = () => {
   const [notifying, setNotifying] = useState(false);
 
   const teacherId = localStorage.getItem('teacher_id');
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);

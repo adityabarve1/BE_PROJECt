@@ -18,11 +18,20 @@ def normalize_phone_number(phone_value) -> Optional[str]:
     if not raw_value:
         return None
 
+    # Excel often stores phone columns as numeric and renders them like 9876543210.0
+    if re.fullmatch(r'\d+\.0', raw_value):
+        raw_value = raw_value.split('.')[0]
+
     digits = ''.join(ch for ch in raw_value if ch.isdigit())
     if len(digits) < 10:
         return None
 
-    return digits[-15:]
+    # Normalize to a dialable 10-digit mobile number for local usage.
+    if len(digits) == 12 and digits.startswith('91'):
+        return digits[-10:]
+    if len(digits) == 11 and digits.startswith('0'):
+        return digits[-10:]
+    return digits[-10:]
 
 
 def normalize_email(email_value) -> Optional[str]:
@@ -90,8 +99,14 @@ def parse_admission_document(file_path: str, class_name: str, admission_year: in
         # Read Excel file
         df = pd.read_excel(file_path)
         
-        # Normalize column names (lowercase, remove spaces)
-        df.columns = df.columns.str.lower().str.strip().str.replace(' ', '_')
+        # Normalize column names (lowercase, normalize separators and punctuation)
+        df.columns = (
+            df.columns
+            .str.lower()
+            .str.strip()
+            .str.replace(r'[^a-z0-9]+', '_', regex=True)
+            .str.strip('_')
+        )
         
         # Map possible column name variations
         column_mapping = {
@@ -101,7 +116,18 @@ def parse_admission_document(file_path: str, class_name: str, admission_year: in
             'income': ['income', 'family_income', 'household_income'],
             'parent_occupation': ['parent_occupation', 'occupation', 'parents_occupation', 'guardian_occupation'],
             'student_phone': ['student_phone', 'phone', 'mobile', 'student_mobile', 'contact_number', 'student_contact'],
-            'parent_phone': ['parent_phone', 'parent_mobile', 'guardian_phone', 'parent_contact', 'parent_number'],
+            'parent_phone': [
+                'parent_phone',
+                'parent_mobile',
+                'guardian_phone',
+                'parent_contact',
+                'parent_number',
+                'parent_no',
+                'parents_phone',
+                'parents_mobile',
+                'guardian_mobile',
+                'guardian_number'
+            ],
             'parent_email': ['parent_email', 'email', 'guardian_email', 'parent_mail'],
             'location': ['location', 'area', 'residence', 'address_type'],
             'date_of_birth': ['date_of_birth', 'dob', 'birth_date', 'birthdate']

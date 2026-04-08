@@ -318,6 +318,7 @@ const StudentList = () => {
                 <TableCell>Class / Roll</TableCell>
                 <TableCell>Attendance</TableCell>
                 <TableCell>Marks</TableCell>
+                <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Parent Phone</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Income</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Location</TableCell>
                 <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Parent Occupation</TableCell>
@@ -328,7 +329,7 @@ const StudentList = () => {
             <TableBody>
               {paged.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} sx={{ textAlign: 'center', py: 6 }}>
+                  <TableCell colSpan={11} sx={{ textAlign: 'center', py: 6 }}>
                     <Typography color="text.secondary">No students found</Typography>
                   </TableCell>
                 </TableRow>
@@ -380,6 +381,9 @@ const StudentList = () => {
                       size="small"
                       color={getMarksColor(student.marks)}
                     />
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
+                    <Typography variant="body2">{student.parent_phone || '—'}</Typography>
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     <Typography variant="body2">{student.income || '—'}</Typography>

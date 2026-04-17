@@ -114,31 +114,63 @@ class DropoutPredictor:
         tabnet_pred, tabnet_risk, _ = self._tabnet_predict(X_tensor)
 
         if self.sklearn_ensemble is not None:
-            dt_preds, lr_preds   = self.sklearn_ensemble.predict(X)
-            dt_probas, lr_probas = self.sklearn_ensemble.predict_proba(X)
+            try:
+                dt_preds, lr_preds   = self.sklearn_ensemble.predict(X)
+                dt_probas, lr_probas = self.sklearn_ensemble.predict_proba(X)
 
-            dt_pred  = int(dt_preds[0])
-            lr_pred  = int(lr_preds[0])
-            dt_proba = float(dt_probas[0])
-            lr_proba = float(lr_probas[0])
+                dt_pred  = int(dt_preds[0])
+                lr_pred  = int(lr_preds[0])
+                dt_proba = float(dt_probas[0])
+                lr_proba = float(lr_probas[0])
 
-            final_pred  = self._majority_vote(dt_pred, lr_pred, tabnet_pred)
-            avg_risk    = (dt_proba + lr_proba + tabnet_risk) / 3.0
+                final_pred  = self._majority_vote(dt_pred, lr_pred, tabnet_pred)
+                avg_risk    = (dt_proba + lr_proba + tabnet_risk) / 3.0
 
-            model_votes = {
-                "decision_tree": {
-                    "prediction": "High" if dt_pred else "Low",
-                    "confidence": round(dt_proba, 4),
-                },
-                "logistic_regression": {
-                    "prediction": "High" if lr_pred else "Low",
-                    "confidence": round(lr_proba, 4),
-                },
-                "tabnet": {
-                    "prediction": "High" if tabnet_pred else "Low",
-                    "confidence": round(tabnet_risk, 4),
-                },
-            }
+                model_votes = {
+                    "decision_tree": {
+                        "prediction": "High" if dt_pred else "Low",
+                        "confidence": round(dt_proba, 4),
+                    },
+                    "logistic_regression": {
+                        "prediction": "High" if lr_pred else "Low",
+                        "confidence": round(lr_proba, 4),
+                    },
+                    "tabnet": {
+                        "prediction": "High" if tabnet_pred else "Low",
+                        "confidence": round(tabnet_risk, 4),
+                    },
+                }
+            except Exception as e:
+                # Handle sklearn pickle/runtime incompatibilities without breaking API.
+                print(f"Warning: sklearn ensemble inference failed ({e}). Falling back to Decision Tree + TabNet.")
+                try:
+                    dt_preds = self.sklearn_ensemble.dt_model.predict(X)
+                    dt_probas = self.sklearn_ensemble.dt_model.predict_proba(X)[:, 1]
+                    dt_pred = int(dt_preds[0])
+                    dt_proba = float(dt_probas[0])
+
+                    final_pred = 1 if (int(dt_pred) + int(tabnet_pred)) >= 1 else 0
+                    avg_risk = (dt_proba + tabnet_risk) / 2.0
+                    model_votes = {
+                        "decision_tree": {
+                            "prediction": "High" if dt_pred else "Low",
+                            "confidence": round(dt_proba, 4),
+                        },
+                        "tabnet": {
+                            "prediction": "High" if tabnet_pred else "Low",
+                            "confidence": round(tabnet_risk, 4),
+                        },
+                    }
+                except Exception as dt_error:
+                    print(f"Warning: Decision Tree fallback failed ({dt_error}). Using TabNet only.")
+                    final_pred = tabnet_pred
+                    avg_risk = tabnet_risk
+                    model_votes = {
+                        "tabnet": {
+                            "prediction": "High" if tabnet_pred else "Low",
+                            "confidence": round(tabnet_risk, 4),
+                        }
+                    }
         else:
             final_pred  = tabnet_pred
             avg_risk    = tabnet_risk
@@ -233,6 +265,10 @@ class DropoutPredictor:
                     if len(contributions) == 2
                     else "SHAP – DT only" if len(contributions) == 1 else "SHAP"
                 )
+
+            # Disable broken sklearn models so subsequent calls avoid repeated failures.
+            if not contributions:
+                self.sklearn_ensemble = None
 
         # ---- Fallback: DT feature_importances_ ---- #
         if shap_vals is None and self.sklearn_ensemble is not None:

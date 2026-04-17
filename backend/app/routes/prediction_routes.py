@@ -37,6 +37,11 @@ def predict_dropout():
     """
     try:
         data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({
+                'error': 'Invalid request body. Expected JSON object with prediction fields.',
+                'success': False
+            }), 400
         
         # Validate required fields
         required_fields = ['attendance', 'marks', 'income', 'gender', 'class', 'parent_occupation', 'location']
@@ -85,6 +90,11 @@ def predict_batch():
     """
     try:
         data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({
+                'error': 'Invalid request body. Expected JSON object with "students" list.',
+                'success': False
+            }), 400
         
         if 'students' not in data or not isinstance(data['students'], list):
             return jsonify({
@@ -125,6 +135,11 @@ def explain_prediction():
     """
     try:
         data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({
+                'error': 'Invalid request body. Expected JSON object with prediction fields.',
+                'success': False
+            }), 400
         
         # Get feature importance
         importance = prediction_service.explain(data)

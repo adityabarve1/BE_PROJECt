@@ -53,7 +53,7 @@ venv.bak/
 # Model files (except best model)
 model/saved_models/*.pth
 !model/saved_models/best_model.pth
-model/saved_models/*.pkl
+
 model/data/processed/*
 
 # Node

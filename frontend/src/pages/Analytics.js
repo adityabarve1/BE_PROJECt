@@ -35,15 +35,6 @@ const Analytics = () => {
       setRefreshing(true);
     }
 
-  const [clusterData, setClusterData] = useState(null);
-
-  useEffect(() => {
-    fetchAnalytics();
-
-    const timer = setInterval(fetchAnalytics, 15000);
-    return () => clearInterval(timer);
-  }, []);
-
     try {
       const [riskResult, clusterResult] = await Promise.allSettled([
         getRiskFactors(),
